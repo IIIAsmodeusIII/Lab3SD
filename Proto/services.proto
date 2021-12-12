@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "github.com/IIIAsmodeusIII/Tarea3/Proto";
+
+service Broker{
+    rpc GetServer  (GetServerReq)  returns (GetServerResp)  {}
+    rpc GetRebelds (GetRebeldsReq) returns (GetRebeldsResp) {}
+}
+
+service Fulcrum{
+    rpc CRUD       (Command) returns (Data) {}
+    rpc GetRebelds (GetRebeldsReq) returns (GetRebeldsResp) {}
+}
+
+// ========================================================================== //
+message GetServerReq {
+    string command = 1;
+    repeated int32 version = 2 [packed=true];
+}
+
+message GetServerResp {
+    string address = 1;
+}
+
+
+
+// ========================================================================== //
+message GetRebeldsReq {
+    string planet = 1;
+    string city = 2;
+    int32 server = 3;
+    repeated int32 version = 4 [packed=true];
+}
+
+message GetRebeldsResp {
+    int32 ammount = 1;
+    int32 server = 2;
+    repeated int32 version = 3 [packed=true];
+}
+
+
+
+// ========================================================================== //
+message Command{
+    string command = 1;
+    repeated int32 version = 2 [packed=true];
+}
+
+message Data{
+    int32 data     = 1;
+    string message = 2;
+    repeated int32 version = 3;
+}
