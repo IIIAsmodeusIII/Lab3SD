@@ -70,7 +70,7 @@ func Executer(commands []string) []string{
 
         if (command != "") {
             // Get command data
-            fmt.Printf("[DEBUG] Comando73: %v .\n", command)
+            fmt.Printf("[DEBUG] ExecuterComando: %v .\n", command)
             data := strings.Split(command, " ")
             comm := data[0]
             planet := data[1] + ".txt"
@@ -162,7 +162,7 @@ func UpdateLine(file string, line int, new_data string){
 
     // Write again updated content
     output := strings.Join(lines, "\n")
-    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0644)
+    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0777)
     failOnError(err, "No se pudo escribir sobre el archivo: " + file)
 }
 
@@ -183,7 +183,7 @@ func DeleteLine(file string, line int){
 
     // Write again updated content
     output := strings.Join(new_lines, "\n")
-    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0644)
+    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0777)
     failOnError(err, "No se pudo escribir sobre el archivo: " + "./Fulcrum/" + file)
 }
 
@@ -196,7 +196,9 @@ func WriteLine(file, data string){
     */
 
     // Open "Registro planetario"
-    f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+    fmt.Printf("[DEBUG] Intentando abrir %v\n.", "./Fulcrum/" + file)
+    f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+    failOnError(err, "No se puede abrir el archivo: " + "./Fulcrum/" + file)
 
     // Write or append new data
     _, err = f.WriteString(data)
