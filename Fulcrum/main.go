@@ -133,6 +133,10 @@ func LineExist(file, city_name string) int{
     Output:
         if city exist, returns line_number. Else, returs -1.
     */
+    index := FindFile(file)
+    if index == -1 {
+        return -1
+    }
 
     input, err := ioutil.ReadFile("./Fulcrum/" + file)
     failOnError(err, "No se pudo abrir el archivo: " + file)
@@ -547,18 +551,27 @@ func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
     file := data[1] + ".txt"
     city := data[2]
 
+    var status int
+
     if (comm == "AddCity"){
         if len(data) == 4 {
-            AddCity(req.Command, file, city, data[3])
+            status = AddCity(req.Command, file, city, data[3])
         }else{
-            AddCity(req.Command, file, city, "0")
+            status = AddCity(req.Command, file, city, "0")
         }
     }else if(comm == "UpdateName"){
-        UpdateName(req.Command, file, city, data[3])
+        status = UpdateName(req.Command, file, city, data[3])
     }else if(comm == "UpdateNumber"){
-        UpdateNumber(req.Command, file, city, data[3])
+        status = UpdateNumber(req.Command, file, city, data[3])
     }else{
-        DeleteCity(req.Command, file, city)
+        status = DeleteCity(req.Command, file, city)
+    }
+
+    if status == -1 {
+        fmt.Printf("[Crud Response] Error de consistencia. Sugiere probar con otro servidor, o en 2 minutos.\n")
+    	return &pb.Data{
+            Code: int32(-1),
+    	}, nil
     }
 
     register := UpdateClock(file)
@@ -566,6 +579,7 @@ func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
 
     fmt.Printf("[Crud Response] Server: %v - %v.\n", server_index, register.version)
 	return &pb.Data{
+        Code: int32(0),
 		Server: server_index,
         Version: register.version,
 	}, nil

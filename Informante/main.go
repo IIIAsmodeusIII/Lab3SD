@@ -59,13 +59,18 @@ func ShowFiles(){
 }
 
 // ============================ CRUD ======================================== //
-func AddCity(planet string, city string) int{
+func AddCity(input, planet string, city string) int{
 
 	// Check register existence
     index := FindCity(planet, city)
 
-    // If not, create
+    // If not, try to create
     if index == -1 {
+
+		if SendCommand(input, server_files[FindCity(planet, city)].version) == -1{
+			return -1
+		}
+
         var new_ver []int32
         new_ver = append(new_ver, 0)
 		new_ver = append(new_ver, 0)
@@ -80,29 +85,39 @@ func AddCity(planet string, city string) int{
         }
 
         server_files = append(server_files, new_file)
-
-    // If exist, check if city exist
     }
 
 	return len(server_files) - 1
 }
 
-func UpdateName(planet, city, new_name string) int{
+func UpdateName(input, planet, city, new_name string) int{
 	index := FindCity(planet, city)
 
 	if index == - 1{
 		return -1
 	}
 
+	if SendCommand(input, server_files[FindCity(planet, city)].version) == -1{
+		return -1
+	}
+
 	server_files[index].city = new_name
-	return index
+	return 0
 }
 
-func DestroyCity(planet, city string) int{
+func UpdateNumber(input, planet, city string) int{
+	return SendCommand(input, server_files[FindCity(planet, city)].version)
+}
+
+func DestroyCity(input, planet, city string) int{
 
 	index := FindCity(planet, city)
 
 	if index == -1{
+		return -1
+	}
+
+	if SendCommand(input, server_files[FindCity(planet, city)].version) == -1{
 		return -1
 	}
 
@@ -115,60 +130,44 @@ func DestroyCity(planet, city string) int{
 
 
 // ============================ SERVER ====================================== //
-func SendCommand(command string, version []int32) {
+func SendCommand(command string, version []int32) int{
 
 	// Connect to Broker
-	fmt.Printf("[SendCommand Request] Broker_address:%v.\n", broker_address)
-	conn, err := grpc.Dial(broker_address, grpc.WithInsecure(), grpc.WithBlock())
-	failOnError(err, "Problema al conectar al servidor.")
-	defer conn.Close()
+	for i:=0; i<15; i++ {
+		fmt.Printf("[SendCommand Request] Broker_address:%v.\n", broker_address)
+		conn, err := grpc.Dial(broker_address, grpc.WithInsecure(), grpc.WithBlock())
+		failOnError(err, "Problema al conectar al servidor.")
+		defer conn.Close()
 
-	c := pb.NewBrokerClient(conn)
-	ctx := context.Background()
-	r, err := c.GetServer(ctx, &pb.GetServerReq{
-	    Command: command,
-	    Version: version,
-	})
+		c := pb.NewBrokerClient(conn)
+		ctx := context.Background()
+		r, err := c.GetServer(ctx, &pb.GetServerReq{
+			Command: command,
+			Version: version,
+		})
 
-	failOnError(err, "No se pudede acceder al servicio")
+		failOnError(err, "No se pudede acceder al servicio")
 
-	// Send command
-	conn, err = grpc.Dial(r.Address, grpc.WithInsecure(), grpc.WithBlock())
-	failOnError(err, "Problema al conectar al servidor.")
-	defer conn.Close()
+		// Send command
+		conn, err = grpc.Dial(r.Address, grpc.WithInsecure(), grpc.WithBlock())
+		failOnError(err, "Problema al conectar al servidor.")
+		defer conn.Close()
 
-	c2 := pb.NewFulcrumClient(conn)
-	ctx2 := context.Background()
-	r2, err := c2.CRUD(ctx2, &pb.Command{
-	    Command: command,
-	    Version: version,
-	})
+		c2 := pb.NewFulcrumClient(conn)
+		ctx2 := context.Background()
+		r2, err := c2.CRUD(ctx2, &pb.Command{
+			Command: command,
+			Version: version,
+		})
 
-	if r2.Code == int32(-1) {
-		fmt.Println("[*] Conflicto con informacion informante infiltrado.")
-	}else{
-
-		data   := strings.Split(command, " ")
-		comm   := data[0]
-		planet := data[1]
-		city   := data[2]
-
-
-		if comm != "DestroyCity" {
-
-			var index int
-			if comm == "UpdateName"{
-				index =  FindCity(planet, data[3])
-				}else{
-					index =  FindCity(planet, city)
-				}
-
-				server_files[index].address = r.Address
-				server_files[index].version = r2.Version
-				server_files[index].server = r2.Server
-				fmt.Printf("[SendCommand Response] Comando finalizado - Nueva Version: %v.\n", r2.Version)
+		if r2.Code == int32(-1) {
+			continue
+		}else{
+			return 0
 		}
 	}
+
+	return -1
 }
 
 
@@ -198,18 +197,17 @@ func Menu(){
         }
 
 		if command == "AddCity"{
-			AddCity(planet, city)
-			SendCommand(input, server_files[FindCity(planet, city)].version)
+			AddCity(input, planet, city)
 		}else if(command == "UpdateName"){
-			UpdateName(planet, city, data[3])
-			SendCommand(input, server_files[FindCity(planet, data[3])].version)
+			UpdateName(input, planet, city, data[3])
 		}else if(command == "DestroyCity"){
-			DestroyCity(planet, city)
-			SendCommand(input, server_files[FindCity(planet, city)].version)
+			DestroyCity(input, planet, city)
 		}else if(command == "Files()"){
 			ShowFiles()
 		}else if(command == "UpdateNumber"){
-			SendCommand(input, server_files[FindCity(planet, city)].version)
+			UpdateNumber(input, planet, city)
+		}else{
+			fmt.Printf("[->] Comando '%v' desconocido.\n", input)
 		}
     }
 }
