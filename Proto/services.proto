@@ -5,16 +5,16 @@ package grpc;
 option go_package = "github.com/IIIAsmodeusIII/Tarea3/Proto";
 
 service Broker{
-    rpc GetServer  (GetServerReq)  returns (GetServerResp)  {}
-    rpc GetRebelds (GetRebeldsReq) returns (GetRebeldsResp) {}
+    rpc GetServer  (GetServerReq)  returns (GetServerResp)  {}  // Ask for server
+    rpc GetRebelds (GetRebeldsReq) returns (GetRebeldsResp) {}  // Ask rebelds
 }
 
 service Fulcrum{
-    rpc CRUD        (Command)         returns (Data)             {}
-    rpc GetRebelds  (GetRebeldsReq)   returns (GetRebeldsResp)   {}
-    rpc Merge       (MergeReq)        returns (stream MergeResp) {}
-    rpc SwitchBlock (BlockReq)        returns (BlockResp)        {}
-    rpc File        (stream FileSend) returns (FileResp)         {}
+    rpc CRUD        (Command)         returns (Data)             {} // Informants CRUD
+    rpc GetRebelds  (GetRebeldsReq)   returns (GetRebeldsResp)   {} // Ask Rebelds
+    rpc Merge       (MergeReq)        returns (stream MergeResp) {} // Start Merge
+    rpc SwitchBlock (BlockReq)        returns (BlockResp)        {} // Block/Unblock Server
+    rpc File        (stream FileSend) returns (FileResp)         {} // Send Files
 }
 
 // ========================================================================== //

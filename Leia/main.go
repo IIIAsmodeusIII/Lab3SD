@@ -55,6 +55,7 @@ func ShowFiles(){
 
 func Menu(){
 
+    fmt.Println("[*] Type GetRebeldsNumber Planet City to get rebelds in that city.")
     fmt.Println("[*] Type 'exit()' to close. Insert command: ")
     for true {
         fmt.Print("-> ")

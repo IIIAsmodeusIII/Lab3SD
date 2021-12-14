@@ -67,9 +67,9 @@ func AddCity(planet string, city string) int{
     // If not, create
     if index == -1 {
         var new_ver []int32
-        new_ver[0]   = int32(0)
-        new_ver[1]   = int32(0)
-        new_ver[2]   = int32(0)
+        new_ver = append(new_ver, 0)
+		new_ver = append(new_ver, 0)
+		new_ver = append(new_ver, 0)
 
         new_file    := PlanetaryData{
             planet: planet,
@@ -118,6 +118,7 @@ func DestroyCity(planet, city string) int{
 func SendCommand(command string, version []int32) {
 
 	// Connect to Broker
+	fmt.Printf("[SendCommand Request] Broker_address:%v.\n", broker_address)
 	conn, err := grpc.Dial(broker_address, grpc.WithInsecure(), grpc.WithBlock())
 	failOnError(err, "Problema al conectar al servidor.")
 	defer conn.Close()
@@ -145,6 +146,28 @@ func SendCommand(command string, version []int32) {
 
 	if r2.Code == int32(-1) {
 		fmt.Println("[*] Conflicto con informacion informante infiltrado.")
+	}else{
+
+		data   := strings.Split(command, " ")
+		comm   := data[0]
+		planet := data[1]
+		city   := data[2]
+
+
+		if comm != "DestroyCity" {
+
+			var index int
+			if comm == "UpdateName"{
+				index =  FindCity(planet, data[3])
+				}else{
+					index =  FindCity(planet, city)
+				}
+
+				server_files[index].address = r.Address
+				server_files[index].version = r2.Version
+				server_files[index].server = r2.Server
+				fmt.Printf("[SendCommand Response] Comando finalizado - Nueva Version: %v.\n", r2.Version)
+		}
 	}
 }
 
@@ -167,7 +190,7 @@ func Menu(){
 
         data    := strings.Split(input, " ")
 		command := data[0]
-		planet  := data[1] + ".txt"
+		planet  := data[1]
 		city    := data[2]
 
         if input == "exit()" {
@@ -176,15 +199,18 @@ func Menu(){
 
 		if command == "AddCity"{
 			AddCity(planet, city)
+			SendCommand(input, server_files[FindCity(planet, city)].version)
 		}else if(command == "UpdateName"){
 			UpdateName(planet, city, data[3])
+			SendCommand(input, server_files[FindCity(planet, data[3])].version)
 		}else if(command == "DestroyCity"){
 			DestroyCity(planet, city)
+			SendCommand(input, server_files[FindCity(planet, city)].version)
 		}else if(command == "Files()"){
 			ShowFiles()
+		}else if(command == "UpdateNumber"){
+			SendCommand(input, server_files[FindCity(planet, city)].version)
 		}
-
-		SendCommand(input, server_files[FindCity(planet, city)].version)
     }
 }
 

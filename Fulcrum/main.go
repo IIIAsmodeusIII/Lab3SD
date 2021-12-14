@@ -7,12 +7,12 @@ import (
     "os"
     "strconv"
     "math/rand"
-    "bufio"
     "io/ioutil"
     "io"
     "strings"
     "time"
     "path/filepath"
+    "flag"
 
 	"context"
 
@@ -116,7 +116,12 @@ func Executer(commands []string) []string{
     return failed
 }
 
+func ShowFiles(){
 
+	for _, file := range server_files {
+		fmt.Printf("[Data] %v.\n", file)
+	}
+}
 
 // =========================== Registro planetario ========================== //
 func LineExist(file, city_name string) int{
@@ -129,31 +134,22 @@ func LineExist(file, city_name string) int{
         if city exist, returns line_number. Else, returs -1.
     */
 
-    // Open file
-    f, err := os.OpenFile(file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-    failOnError(err, "No se puede abrir el archivo: " + file)
+    input, err := ioutil.ReadFile("./Fulcrum/" + file)
+    failOnError(err, "No se pudo abrir el archivo: " + file)
+    lines := strings.Split(string(input), "\n")
 
-    // Create scanner (To read line by line, not the entire file)
-    scan      := bufio.NewScanner(f)
+    for i, line := range lines {
+        if line != ""{
 
-    // Iterate line by line
-    i := 0
-    for scan.Scan() {
+            data := strings.Split(line, " ")
+            city := data[1]
 
-        // Split data
-        line   := strings.Split(scan.Text(), " ")
-        city   := line[1]
-
-        // return line_number
-        if(city_name == city){
-            f.Close()
-            return i
+            if city == city_name {
+                return i
+            }
         }
-
-        i = i + 1
     }
 
-    f.Close()
     return -1
 }
 
@@ -167,7 +163,7 @@ func UpdateLine(file string, line int, new_data string){
     */
 
     // Open file
-    input, err := ioutil.ReadFile(file)
+    input, err := ioutil.ReadFile("./Fulcrum/" + file)
     failOnError(err, "No se pudo abrir el archivo: " + file)
 
     // Create new content in specific line
@@ -176,14 +172,14 @@ func UpdateLine(file string, line int, new_data string){
 
     // Write again updated content
     output := strings.Join(lines, "\n")
-    err = ioutil.WriteFile(file, []byte(output), 0644)
+    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0644)
     failOnError(err, "No se pudo escribir sobre el archivo: " + file)
 }
 
 func DeleteLine(file string, line int){
     // Open file
-    input, err := ioutil.ReadFile(file)
-    failOnError(err, "No se pudo abrir el archivo: " + file)
+    input, err := ioutil.ReadFile("./Fulcrum/" + file)
+    failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
 
     // Create new content in specific line
     lines := strings.Split(string(input), "\n")
@@ -197,8 +193,8 @@ func DeleteLine(file string, line int){
 
     // Write again updated content
     output := strings.Join(new_lines, "\n")
-    err = ioutil.WriteFile(file, []byte(output), 0644)
-    failOnError(err, "No se pudo escribir sobre el archivo: " + file)
+    err = ioutil.WriteFile("./Fulcrum/" + file, []byte(output), 0644)
+    failOnError(err, "No se pudo escribir sobre el archivo: " + "./Fulcrum/" + file)
 }
 
 func WriteLine(file, data string){
@@ -210,12 +206,12 @@ func WriteLine(file, data string){
     */
 
     // Open "Registro planetario"
-    f, err := os.OpenFile(file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-    failOnError(err, "No se puede abrir el archivo: " + file)
+    f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+    failOnError(err, "No se puede abrir el archivo: " + "./Fulcrum/" + file)
 
     // Write or append new data
     _, err = f.WriteString(data)
-    failOnError(err, "No se puede escribir sobre el archivo:" + file)
+    failOnError(err, "No se puede escribir sobre el archivo:" + "./Fulcrum/" + file)
 
     f.Close()
 }
@@ -229,8 +225,8 @@ func ReadLine(file string, line int) string{
     */
 
     // Read file
-    input, err := ioutil.ReadFile(file)
-    failOnError(err, "No se pudo abrir el archivo: " + file)
+    input, err := ioutil.ReadFile("./Fulcrum/" + file)
+    failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
 
     // Return specific line
     lines := strings.Split(string(input), "\n")
@@ -238,19 +234,19 @@ func ReadLine(file string, line int) string{
 }
 
 func GetContent(file string) string {
-    input, err := ioutil.ReadFile(file)
-    failOnError(err, "No se pudo abrir el archivo: " + file)
+    input, err := ioutil.ReadFile("./Fulcrum/" + file)
+    failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
 
     return string(input)
 }
 
 func AppendLog(file, data string){
-    WriteLine("log_" + file, data)
+    WriteLine("log_" + file, data + "\n")
 }
 
 func DeleteLogs(){
 
-    files, err := filepath.Glob("./log_*.txt")
+    files, err := filepath.Glob("./Fulcrum/log_*.txt")
     failOnError(err, "Error al buscar logs.")
 
     for _, f := range files {
@@ -268,9 +264,9 @@ func AddCity(command, planet, city, ammount string) int{
     // If not, create
     if index == -1 {
         var new_ver []int32
-        new_ver[0]   = int32(0)
-        new_ver[1]   = int32(0)
-        new_ver[2]   = int32(0)
+        new_ver = append(new_ver, 0)
+        new_ver = append(new_ver, 0)
+        new_ver = append(new_ver, 0)
 
         new_file    := PlanetaryData{
             name: planet,
@@ -290,7 +286,7 @@ func AddCity(command, planet, city, ammount string) int{
     }
 
     // If city doesnt exist, create
-    WriteLine(planet, fmt.Sprintf("%v %v %v", planet, city, ammount))
+    WriteLine(planet, fmt.Sprintf("%v %v %v\n", planet[:len(planet) - 4], city, ammount))
     return 0
 }
 
@@ -302,7 +298,7 @@ func UpdateName(command, planet, city, data string) int{
 
     ammount := strings.Split(ReadLine(planet, index), " ")[2]
 
-    UpdateLine(planet, index, fmt.Sprintf("%v %v %v", planet, data, ammount))
+    UpdateLine(planet, index, fmt.Sprintf("%v %v %v", planet[:len(planet) - 4], data, ammount))
     return 0
 }
 
@@ -312,7 +308,7 @@ func UpdateNumber(command, planet, city, data string) int {
         return -1
     }
 
-    UpdateLine(planet, index, fmt.Sprintf("%v %v %v", planet, city, data))
+    UpdateLine(planet, index, fmt.Sprintf("%v %v %v\n", planet[:len(planet) - 4], city, data))
     return 0
 }
 
@@ -520,7 +516,7 @@ func Propagate(files []string, server int){
         failOnError(err, "Error durante stream.")
     }
 
-    reply, err := stream.CloseAndRecv()
+    _, err = stream.CloseAndRecv()
     failOnError(err, "Error al cerrar stream.")
 }
 
@@ -530,7 +526,7 @@ func Propagate(files []string, server int){
 
 func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
 
-    fmt.Printf("[Informantes Request] Command: %v.\n", req.Command)
+    fmt.Printf("[Crud Request] Command: %v.\n", req.Command)
     Blocked()
 
     // Get command data
@@ -556,6 +552,7 @@ func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
     register := UpdateClock(file)
     AppendLog(file, req.Command)
 
+    fmt.Printf("[Crud Response] Server: %v - %v.\n", server_index, register.version)
 	return &pb.Data{
 		Server: server_index,
         Version: register.version,
@@ -571,7 +568,13 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
     file := req.Planet + ".txt"
 
     // Check planet exist
+    fmt.Println("[DEBUG]")
+    ShowFiles()
+
     planet := FindFile(file)
+
+    fmt.Printf("[DEBUG] %v.\n", planet)
+
     if planet == -1 {
 
         new_version := []int32{int32(0),int32(0),int32(0),}
@@ -586,6 +589,8 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
 
     // Check city exist
     line := LineExist(file, req.City)
+    fmt.Printf("[DEBUG] %v.\n", line)
+
     if line == -1 {
 
         new_version := []int32{int32(0),int32(0),int32(0),}
@@ -610,14 +615,9 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
 	}, nil
 }
 
-func (s *server) Merge(req *pb.MergeReq, stream pb.MergeResp) error {
+func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
 
-    /*
-    Send logs
-    Delete .txt
-    Close stream
-    */
-
+    fmt.Println("[Merge] Iniciando envio de logs.")
     // Send logs
     logs, err := filepath.Glob("./log_*.txt")
     failOnError(err, "Error al buscar archivos.")
@@ -636,18 +636,19 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.MergeResp) error {
             file := strings.Split(line, " ")[1]
             version := server_files[FindFile(file)].version
 
-            var new_log *pb.FileSend
+            var new_log *pb.MergeResp
             new_log.Server = server_index
             new_log.Version = version
             new_log.Command = line
 
 
-            err = stream.Send(new_log)
+            err := stream.Send(new_log)
             failOnError(err, "Error al enviar log line")
         }
     }
 
     // Reset data
+    fmt.Println("[Merge] Eliminando archivos obsoletos.")
     files, err := filepath.Glob("./*.txt")
     failOnError(err, "Error al buscar archivos.")
 
@@ -663,8 +664,10 @@ func (s *server) SwitchBlock(ctx context.Context, req *pb.BlockReq) (*pb.BlockRe
 
     if server_block{
         server_block = false
+        fmt.Println("[Merge] Liberando servidor.")
     }else{
         server_block = true
+        fmt.Println("[Merge] Bloqueando servidor.")
     }
 
 	return &pb.BlockResp{
@@ -672,8 +675,9 @@ func (s *server) SwitchBlock(ctx context.Context, req *pb.BlockReq) (*pb.BlockRe
 	}, nil
 }
 
-func (s *server) File(stream pb.FileSend) error {
+func (s *server) File(stream pb.Fulcrum_FileServer) error {
 
+    fmt.Println("[Merge] Recibiendo datos de propagacion.")
     for {
         file, err := stream.Recv()
         if err == io.EOF {
@@ -686,6 +690,10 @@ func (s *server) File(stream pb.FileSend) error {
         err = ioutil.WriteFile(file.Name, []byte(file.File), 0644)
         failOnError(err, "Error escribiendo archivo.")
     }
+
+    fmt.Println("[Merge] Replica realizada.")
+
+    return nil
 }
 
 func StartServer(port string){
@@ -726,7 +734,7 @@ func main(){
     servers_ips[2] = *fulcrum_3_address
 
     // Set server index
-    server_index = *index
+    server_index = int32(*index)
 
     // Set seed
     rand.Seed(time.Now().UnixNano())
@@ -736,6 +744,7 @@ func main(){
 
     // Start server dah
 	StartServer(*port)
+    *merge_time += 1
 
     // Merge every 'merge_time' seconds
     /*

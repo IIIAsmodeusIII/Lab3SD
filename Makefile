@@ -3,7 +3,7 @@ SERVER_2_ADDRESS=localhost:50051
 SERVER_3_ADDRESS=localhost:50052
 
 BROKER_PORT=:50049
-BROKER_ADDRESS=localhost:${BROKER_PORT}
+BROKER_ADDRESS=localhost${BROKER_PORT}
 
 BIN_NAME=program
 
@@ -15,6 +15,8 @@ GRPC:
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     Proto/services.proto
 
+clean:
+	rm ./Fulcrum/*.txt
 
 
 ## ========================================================================== ##

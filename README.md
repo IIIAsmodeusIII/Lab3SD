@@ -11,9 +11,11 @@
 
 - Se asumen el index del server fulcrum desde 0. (Server0, Server1, Server2)
 
-- Dadas las libertades que otorga el enunciado, se hicieron en Leia y en Informantes de manera distinta algunas cosas:
+- Dadas las libertades que otorga el enunciado, se hicieron en Leia y en Informantes:
     1. En Leia, Broker siempre selecciona un server aleatorio. Si la respuesta de este posee un reloj menos actualizado que el solicitado, busca respuesta en otro servidor. De esta manera, Leia solamente realiza una consulta que siempre le retornara un valor igual o mas actualizado.
-    1. En Informantes, Broker siempre selecciona un server aleatorio. Si el Informante al conectarse a ese servidor, no encuentra un registro suficientemente actualizado a sus writes, espera a que ocurra un proceso de merge. Se podria re intentar la conexion y realizar un proceso similar a Leia, pero queriamos cubrir diferentes formas de resolver el problema.
+    1. En Informantes, Broker siempre selecciona un server aleatorio. Si el Informante al conectarse a ese servidor, no encuentra un registro suficientemente actualizado a sus writes, consulta nuevamente al Broker por otro servidor.
+
+- Para evitar errores durante el tiempo de merge, el master-node bloquea los servidores momentaneamente hasta que el proceso de replicas sea completado. Durante ese lapso, se aceptan consultas, pero su procesamiento sera retenido hasta que se libere el servidor y sea una replica consistente a las demas.
 
 ##Merge
 
@@ -37,6 +39,17 @@ Las instrucciones de ejecucion son similares en cada maquina. La diferencia radi
 
 Se recuerda se debe tener el fireware desactivado para que los procesos en maquinas distintas puedan comunicarse.
 
+No se requiere un orden especifico de ejecucion, si se requiere que todos los procesos esten levantados antes de comenzar a utilizar comandos. Mas detalles sobre los comandos, se encuentran en la propia consola de cada programa.
+
+Leia:
+    GetRebeldsNumber
+
+Informantes:
+    AddCity Planet City [Rebelds]
+    UpdateName Planet City New_Name
+    UpdateNumber Planet City New_Rebelds
+    DeleteCity Planet City
+
 ### Codigos
 
 I - Informantes
@@ -51,3 +64,10 @@ F - Fulcrum
 ### Pasos para ejecutar sin compilar
 
 1. make dev{CODIGO}
+
+### Reiniciar
+
+1. Cerrar todos los programas
+1. make clean (Para eliminar logs y registros planetarios)
+1. Ejecutar programas
+1. Ingresar comandos

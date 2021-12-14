@@ -32,9 +32,10 @@ func failOnError(err error, msg string) {
 // ================================= Server ================================= //
 func (s *server) GetServer(ctx context.Context, req *pb.GetServerReq) (*pb.GetServerResp, error) {
 
-    //server_index   := rand.Intn(3)
-    server_index   := 0
+    fmt.Printf("[GetServer Request] %v - %v.\n", req.Command, req.Version)
+    server_index   := rand.Intn(3)
 
+    fmt.Printf("[GetServer Response] Address: %v.\n", servers_ips[server_index])
 	return &pb.GetServerResp{
 		Address: servers_ips[server_index],
 	}, nil
@@ -46,9 +47,33 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
     var server_address string
     var server_index int
 
+    var ammount int32
+    var version []int32
+
     for {
-        //server_index   = rand.Intn(3)
-        server_index   = 0
+        var servers []int
+        server_index   = rand.Intn(3)
+
+        // Check if server was used before
+        for {
+            server_index   = rand.Intn(3)
+            finded := true
+
+            for _, i := range servers{
+                if i == server_index{
+                    finded = false
+                    break
+                }
+            }
+
+            if finded {
+                break
+            }
+        }
+
+        // Register server
+        servers = append(servers, server_index)
+
 
         server_address = servers_ips[server_index]
         fmt.Printf("[GetRebelds Request] Planet: %v. City: %v. Server: %v.\n", req.Planet, req.City, server_address)
@@ -69,19 +94,23 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
         })
         failOnError(err, "No se pudede acceder al servicio")
 
-        // If clock its older, try another server
-        if r.Version[server_index] <= req.Version[server_index]{
+        // If clock its older or server doesnt have answer, try another server
+        if r.Version[server_index] < req.Version[server_index] || r.Server == int32(-1){
             continue
+        }else{
+            ammount = r.Ammount
+            version = r.Version
+            break
         }
-
-        // If clock its just fine, send response
-        fmt.Printf("[GetRebelds Response] Ammount: %v. Version: %v.\n", r.Ammount, r.Version)
-        return &pb.GetRebeldsResp{
-            Ammount: r.Ammount,
-            Server: int32(server_index),
-            Version: r.Version,
-            }, nil
     }
+
+    // If clock its just fine, send response
+    fmt.Printf("[GetRebelds Response] Ammount: %v. Version: %v.\n", ammount, version)
+    return &pb.GetRebeldsResp{
+        Ammount: ammount,
+        Server: int32(server_index),
+        Version: version,
+    }, nil
 }
 
 func StartServer(port string){
