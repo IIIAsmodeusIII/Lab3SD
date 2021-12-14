@@ -524,9 +524,11 @@ func Propagate(files []string, server int){
     failOnError(err, "Error enviando archivos")
 
     for _, file := range files {
-        var new_file *pb.FileSend
-        new_file.Name = file
-        new_file.File = GetContent(file)
+
+        new_file := &pb.FileSend{
+            Name: file,
+            File: GetContent(file),
+    	}
 
         err = stream.Send(new_file)
         failOnError(err, "Error durante stream.")
@@ -662,11 +664,11 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
             file := strings.Split(line, " ")[1]
             version := server_files[FindFile(file+".txt")].version
 
-            var new_log *pb.MergeResp
-            new_log.Server = server_index
-            new_log.Version = version
-            new_log.Command = line
-
+            new_log := &pb.MergeResp{
+                Command: line,
+        		Server: server_index,
+                Version: version,
+        	}
 
             err := stream.Send(new_log)
             failOnError(err, "Error al enviar log line")
