@@ -353,13 +353,13 @@ func MergeMaster(){
         file    := data[1] + ".txt"
 
         if command == "AddCity"{
-            QAddCity = append(QAddCity, command)
+            QAddCity = append(QAddCity, server_log.Command)
         }else if command == "UpdateNumber"{
-            QUpdateNumber = append(QUpdateNumber, command)
+            QUpdateNumber = append(QUpdateNumber, server_log.Command)
         }else if command == "UpdateName"{
-            QUpdateName = append(QUpdateName, command)
+            QUpdateName = append(QUpdateName, server_log.Command)
         }else if(command == "DestroyCity"){
-            QDestroyCity = append(QDestroyCity, command)
+            QDestroyCity = append(QDestroyCity, server_log.Command)
         }else{
             continue
         }
@@ -407,13 +407,15 @@ func MergeMaster(){
         file    := data[1] + ".txt"
 
         if command == "AddCity"{
-            QAddCity = append(QAddCity, command)
+            QAddCity = append(QAddCity, server_log.Command)
         }else if command == "UpdateNumber"{
-            QUpdateNumber = append(QUpdateNumber, command)
+            QUpdateNumber = append(QUpdateNumber, server_log.Command)
         }else if command == "UpdateName"{
-            QUpdateName = append(QUpdateName, command)
+            QUpdateName = append(QUpdateName, server_log.Command)
+        }else if(command == "DestroyCity"){
+            QDestroyCity = append(QDestroyCity, server_log.Command)
         }else{
-            QDestroyCity = append(QDestroyCity, command)
+            continue
         }
 
         // Update clock
@@ -582,13 +584,7 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
     file := req.Planet + ".txt"
 
     // Check planet exist
-    fmt.Println("[DEBUG]")
-    ShowFiles()
-
     planet := FindFile(file)
-
-    fmt.Printf("[DEBUG] %v.\n", planet)
-
     if planet == -1 {
 
         new_version := []int32{int32(0),int32(0),int32(0),}
