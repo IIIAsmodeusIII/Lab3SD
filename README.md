@@ -35,11 +35,16 @@ Por esto, se propone lo siguiente:
 
 ## Instrucciones
 
-Las instrucciones de ejecucion son similares en cada maquina. La diferencia radica en el nombre del comando: Para compilar y ejecutar un servidor Fulcrum en su maquina: 'make startF' para iniciar un Informante: 'make startI'. Los codigos para cada ejecucion se dejan a continuacion.
+-Dist05 - Consola1-Informante: make devI
+-Dist05 - Consola2-Fulcrum: make devF i=1
 
-Se recuerda se debe tener el fireware desactivado para que los procesos en maquinas distintas puedan comunicarse.
+-Dist06 - Consola1-Informante: make devI
+-Dist06 - Consola2-Fulcrum: make devI i=2
 
-No se requiere un orden especifico de ejecucion, si se requiere que todos los procesos esten levantados antes de comenzar a utilizar comandos. Mas detalles sobre los comandos, se encuentran en la propia consola de cada programa.
+-Dist07 - Consola1-Leia: make devL
+-Dist07 - Consola2-FulcrumMaster: make devF
+
+-Dist08 - Consola1-Broker: make devB
 
 Leia:
     GetRebeldsNumber
@@ -49,13 +54,6 @@ Informantes:
     UpdateName Planet City New_Name
     UpdateNumber Planet City New_Rebelds
     DeleteCity Planet City
-
-### Codigos
-
-- I - Informantes
-- L - Leia
-- B - Broker
-- F - Fulcrum
 
 ### Pasos para compilar y ejecutar
 

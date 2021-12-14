@@ -327,6 +327,7 @@ func MergeMaster(){
 
     // Block servers while merge
     server_block = true
+    fmt.Println("[Merge] Bloqueando servidores.")
     SwitchBlockMaster(servers_ips[1])
     SwitchBlockMaster(servers_ips[2])
 
@@ -386,6 +387,8 @@ func MergeMaster(){
         }
     }
 
+    fmt.Println("[Merge] Logs server 1 leidos.")
+
     // Connect to second server
     conn, err = grpc.Dial(servers_ips[2], grpc.WithInsecure(), grpc.WithBlock())
     failOnError(err, "Problema al conectar al servidor.")
@@ -438,7 +441,12 @@ func MergeMaster(){
         }
     }
 
+    fmt.Println("[Merge] Logs server 2 leidos.")
+
+    fmt.Printf("[Merge] CreateLogs:%v, UpdateLogs:%v, DelteLogs:%v.\n", len(QAddCity), len(QUpdateName) + len(QUpdateNumber), QDestroyCity)
+
     // Execute
+    fmt.Println("[Merge] Ejecutando logs externos.")
     Executer(QAddCity)
     QUpdateNumber2 := Executer(QUpdateNumber)
     Executer(QUpdateName)
@@ -446,16 +454,20 @@ func MergeMaster(){
     Executer(QUpdateNumber2)
 
     // Delete logs
+    fmt.Println("[Merge] Eliminando logs locales.")
     DeleteLogs()
 
     // Propagate files
-    files, err := filepath.Glob("./*.txt")
+    fmt.Println("[Merge] Propagando archivos a servidores.")
+    files, err := filepath.Glob("./Fulcrum/*.txt")
     failOnError(err, "Error al buscar archivos.")
+    fmt.Printf("[Merge] Archivos a propagar:%v.\n", len(files))
 
     Propagate(files, 1)
     Propagate(files, 2)
 
     // Release servers
+    fmt.Println("[Merge] Liberando servidores.")
     SwitchBlockMaster(servers_ips[1])
     SwitchBlockMaster(servers_ips[2])
     server_block = false
@@ -497,8 +509,8 @@ func Blocked(){
 }
 
 func Propagate(files []string, server int){
-    // Connect to second server
-    conn, err := grpc.Dial(servers_ips[1], grpc.WithInsecure(), grpc.WithBlock())
+
+    conn, err := grpc.Dial(servers_ips[server], grpc.WithInsecure(), grpc.WithBlock())
     failOnError(err, "Problema al conectar al servidor.")
 
     defer conn.Close()
