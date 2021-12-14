@@ -71,7 +71,7 @@ func Executer(commands []string) []string{
         if command == "" {
             continue
         }
-        
+
         // Get command data
         data := strings.Split(command, " ")
         comm := data[0]
@@ -433,8 +433,6 @@ func MergeMaster(){
         }
 
         // Update clock
-        data  = strings.Split(command, " ")
-        file  = data[1] + ".txt"
         index := FindFile(file)
         if index == -1 {
 
