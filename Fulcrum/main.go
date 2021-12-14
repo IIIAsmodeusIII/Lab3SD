@@ -124,6 +124,9 @@ func LineExist(file, city_name string) int{
         return -1
     }
 
+    f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+    f.Close()
+
     input, err := ioutil.ReadFile("./Fulcrum/" + file)
     failOnError(err, "No se pudo abrir el archivo: " + file)
     lines := strings.Split(string(input), "\n")
@@ -196,7 +199,6 @@ func WriteLine(file, data string){
     */
 
     // Open "Registro planetario"
-    fmt.Printf("[DEBUG] Intentando abrir %v\n.", "./Fulcrum/" + file)
     f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
     failOnError(err, "No se puede abrir el archivo: " + "./Fulcrum/" + file)
 
