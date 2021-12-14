@@ -631,7 +631,7 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
 
     fmt.Println("[Merge] Iniciando envio de logs.")
     // Send logs
-    logs, err := filepath.Glob("./log_*.txt")
+    logs, err := filepath.Glob("./Fulcrum/log_*.txt")
     failOnError(err, "Error al buscar archivos.")
 
     for _, log := range logs {
@@ -661,7 +661,7 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
 
     // Reset data
     fmt.Println("[Merge] Eliminando archivos obsoletos.")
-    files, err := filepath.Glob("./*.txt")
+    files, err := filepath.Glob("./Fulcrum/*.txt")
     failOnError(err, "Error al buscar archivos.")
 
     for _, f := range files {
