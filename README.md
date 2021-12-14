@@ -6,7 +6,7 @@
 1. Francisca Rubio     201773555-4
 1. Bruno Vega          201854051-k
 
-##Supuestos
+## Supuestos
 - Si un planeta o ciudad no existe, se asumen 0 rebeldes y Version [0,0,0]. De forma que cualquier update de parte de los informantes, genere consistencia al proceso Leia.
 
 - Se asumen el index del server fulcrum desde 0. (Server0, Server1, Server2)
@@ -17,7 +17,7 @@
 
 - Para evitar errores durante el tiempo de merge, el master-node bloquea los servidores momentaneamente hasta que el proceso de replicas sea completado. Durante ese lapso, se aceptan consultas, pero su procesamiento sera retenido hasta que se libere el servidor y sea una replica consistente a las demas.
 
-##Merge
+## Merge
 
 Se busca una manera de reducir la informacion perdida en cada merge. Si bien se busca consistencia eventual, tambien se reconoce la importancia de realizar un mejor esfuerzo al solucionar errores de consistencia. Entonces, en afan de una secuencia logica de pasos y entendiendo que las secuencias sin sentido: DestroyCity X Y antes de AddCity X Y no son aceptadas y por ende no quedan en logs, se asume que todos los logs poseen llamados que debieron tener sentido al estado del sistema.
 
@@ -33,7 +33,7 @@ Por esto, se propone lo siguiente:
 - Se eliminan los logs tanto en master-node como en los slave-nodes. Tambien se borran los archivos en los slave-nodes.
 - Se envian los archivos locales para mantener consistencia en slave-nodes.
 
-##Instrucciones
+## Instrucciones
 
 Las instrucciones de ejecucion son similares en cada maquina. La diferencia radica en el nombre del comando: Para compilar y ejecutar un servidor Fulcrum en su maquina: 'make startF' para iniciar un Informante: 'make startI'. Los codigos para cada ejecucion se dejan a continuacion.
 
@@ -52,10 +52,10 @@ Informantes:
 
 ### Codigos
 
-I - Informantes
-L - Leia
-B - Broker
-F - Fulcrum
+- I - Informantes
+- L - Leia
+- B - Broker
+- F - Fulcrum
 
 ### Pasos para compilar y ejecutar
 
