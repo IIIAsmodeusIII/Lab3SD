@@ -50,30 +50,9 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
     var ammount int32
     var version []int32
 
+    i := 0
     for {
-        var servers []int
         server_index   = rand.Intn(3)
-
-        // Check if server was used before
-        for {
-            server_index   = rand.Intn(3)
-            finded := true
-
-            for _, i := range servers{
-                if i == server_index{
-                    finded = false
-                    break
-                }
-            }
-
-            if finded {
-                break
-            }
-        }
-
-        // Register server
-        servers = append(servers, server_index)
-
 
         server_address = servers_ips[server_index]
         fmt.Printf("[GetRebelds Request] Planet: %v. City: %v. Server: %v.\n", req.Planet, req.City, server_address)
@@ -94,12 +73,20 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
         })
         failOnError(err, "No se pudede acceder al servicio")
 
+        if r.Server == int32(-1) {
+            i++
+        }
+
         // If clock its older or server doesnt have answer, try another server
-        if r.Version[server_index] < req.Version[server_index] || r.Server == int32(-1){
+        if r.Version[server_index] < req.Version[server_index]{
             continue
         }else{
             ammount = r.Ammount
             version = r.Version
+            break
+        }
+
+        if i == 6 {
             break
         }
     }

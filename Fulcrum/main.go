@@ -661,17 +661,19 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
 
         for _, line := range lines {
 
-            file := strings.Split(line, " ")[1]
-            version := server_files[FindFile(file+".txt")].version
+            if line != ""{
+                file := strings.Split(line, " ")[1]
+                version := server_files[FindFile(file+".txt")].version
 
-            new_log := &pb.MergeResp{
-                Command: line,
-        		Server: server_index,
-                Version: version,
-        	}
+                new_log := &pb.MergeResp{
+                    Command: line,
+                    Server: server_index,
+                    Version: version,
+                }
 
-            err := stream.Send(new_log)
-            failOnError(err, "Error al enviar log line")
+                err := stream.Send(new_log)
+                failOnError(err, "Error al enviar log line")
+            }
         }
     }
 
