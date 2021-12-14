@@ -447,7 +447,7 @@ func MergeMaster(){
 
     fmt.Println("[Merge] Logs server 2 leidos.")
 
-    fmt.Printf("[Merge] CreateLogs:%v, UpdateLogs:%v, DelteLogs:%v.\n", len(QAddCity), len(QUpdateName) + len(QUpdateNumber), QDestroyCity)
+    fmt.Printf("[Merge] CreateLogs:%v, UpdateLogs:%v, DelteLogs:%v.\n", len(QAddCity), len(QUpdateName) + len(QUpdateNumber), len(QDestroyCity))
 
     // Execute
     fmt.Println("[Merge] Ejecutando logs externos.")
@@ -660,7 +660,7 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
         for _, line := range lines {
 
             file := strings.Split(line, " ")[1]
-            version := server_files[FindFile(file)].version
+            version := server_files[FindFile(file+".txt")].version
 
             var new_log *pb.MergeResp
             new_log.Server = server_index
