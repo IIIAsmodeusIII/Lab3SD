@@ -238,7 +238,7 @@ func ReadLine(file string, line int) string{
 }
 
 func GetContent(file string) string {
-    input, err := ioutil.ReadFile("./Fulcrum/" + file)
+    input, err := ioutil.ReadFile(file)
     failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
 
     return string(input)
