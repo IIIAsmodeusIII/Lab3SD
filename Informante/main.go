@@ -67,14 +67,14 @@ func AddCity(input, planet string, city string) int{
     // If not, try to create
     if index == -1 {
 
-		if SendCommand(input, server_files[FindCity(planet, city)].version) == -1{
+		var new_ver []int32
+		new_ver = append(new_ver, 0)
+		new_ver = append(new_ver, 0)
+		new_ver = append(new_ver, 0)
+
+		if SendCommand(input, new_ver) == -1{
 			return -1
 		}
-
-        var new_ver []int32
-        new_ver = append(new_ver, 0)
-		new_ver = append(new_ver, 0)
-		new_ver = append(new_ver, 0)
 
         new_file    := PlanetaryData{
             planet: planet,
