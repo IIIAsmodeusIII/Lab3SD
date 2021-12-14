@@ -197,7 +197,6 @@ func WriteLine(file, data string){
 
     // Open "Registro planetario"
     f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-    failOnError(err, "No se puede abrir el archivo: " + "./Fulcrum/" + file)
 
     // Write or append new data
     _, err = f.WriteString(data)
