@@ -53,7 +53,7 @@ startF:
 	make runF
 
 devF:
-	go run Fulcrum/main.go -sm=${SERVER_1_ADDRESS} -s1=${SERVER_2_ADDRESS} -s2=${SERVER_3_ADDRESS}
+	go run Fulcrum/main.go -sm=${SERVER_1_ADDRESS} -s1=${SERVER_2_ADDRESS} -s2=${SERVER_3_ADDRESS} -i=$(i)
 
 # Requires:
 # p: Port to listen. 50050 default.

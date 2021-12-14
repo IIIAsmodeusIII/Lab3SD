@@ -724,7 +724,6 @@ func main(){
     fulcrum_2_address := flag.String("s1", "localhost:50051", "Address of second server")
     fulcrum_3_address := flag.String("s2", "localhost:50052", "Address of third server")
     index             := flag.Int("i", 0, "Server index")
-    merge_time        := flag.Int("mt", 120, "Time between merge")
 
     flag.Parse()
 
@@ -742,19 +741,13 @@ func main(){
     // Set server vars
     server_block = false
 
-    // Start server dah
-	StartServer(*port)
-    *merge_time += 1
-
-    // Merge every 'merge_time' seconds
-    /*
+    // Merge every 'merge_time' seconds from master-node
     if server_index == 0 {
-        go StartServer
-        for range time.Tick(time.Second * *merge_time) {
-            Merge()
+        go StartServer(*port)
+        for range time.Tick(time.Second * 120) {
+            MergeMaster()
         }
     }else{
-        StartServer()
+        StartServer(*port)
     }
-    */
 }
