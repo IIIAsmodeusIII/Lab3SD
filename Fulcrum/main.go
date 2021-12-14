@@ -68,55 +68,36 @@ func Executer(commands []string) []string{
 
     for _, command := range commands {
 
-        if command == "" {
-            continue
-        }
+        if (command != "") {
+            // Get command data
+            data := strings.Split(command, " ")
+            comm := data[0]
+            planet := data[1] + ".txt"
+            city := data[2]
 
-        // Get command data
-        data := strings.Split(command, " ")
-        comm := data[0]
-        file := data[1] + ".txt"
-        city := data[2]
+            var status int
 
-        var status int
-
-        if (comm == "AddCity"){
-
-            // Check register existence
-            index := FindFile(file)
-            if index == -1 {
-                new_ver     := make([]int32, 3)
-                new_ver[0]   = int32(0)
-                new_ver[1]   = int32(0)
-                new_ver[2]   = int32(0)
-
-                new_file    := PlanetaryData{
-                    name: file,
-                    version: new_ver,
+            if (comm == "AddCity"){
+                if len(data) == 4 {
+                    status = AddCity(command, planet, city, data[3])
+                }else{
+                    status = AddCity(command, planet, city, "0")
                 }
-
-                server_files = append(server_files, new_file)
-            }
-
-
-            if len(data) == 4 {
-                status = AddCity(command, file, city, data[3])
+            }else if(comm == "UpdateName"){
+                status = UpdateName(command, planet, city, data[3])
+            }else if(comm == "UpdateNumber"){
+                status = UpdateNumber(command, planet, city, data[3])
+            }else if(comm == "DestroyCity"){
+                status = DeleteCity(command, planet, city)
             }else{
-                status = AddCity(command, file, city, "0")
+                continue
             }
-        }else if(comm == "UpdateName"){
-            status = UpdateName(command, file, city, data[3])
-        }else if(comm == "UpdateNumber"){
-            status = UpdateNumber(command, file, city, data[3])
-        }else{
-            status = DeleteCity(command, file, city)
-        }
 
-        if status == -1 {
-            failed = append(failed, command)
+            if status == -1 {
+                failed = append(failed, command)
+            }
         }
     }
-
     return failed
 }
 
