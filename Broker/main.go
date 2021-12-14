@@ -87,6 +87,10 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
         }
 
         if i == 6 {
+            ammount = 0
+            version = append(version, int32(0))
+            version = append(version, int32(0))
+            version = append(version, int32(0))
             break
         }
     }
