@@ -52,10 +52,10 @@ Informantes:
 
 ### Codigos
 
-1. I - Informantes
-1. L - Leia
-1. B - Broker
-1. F - Fulcrum
+- I - Informantes
+- L - Leia
+- B - Broker
+- F - Fulcrum
 
 ### Pasos para compilar y ejecutar
 
