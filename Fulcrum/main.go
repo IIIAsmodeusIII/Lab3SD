@@ -68,6 +68,10 @@ func Executer(commands []string) []string{
 
     for _, command := range commands {
 
+        if command == "" {
+            continue
+        }
+        
         // Get command data
         data := strings.Split(command, " ")
         comm := data[0]

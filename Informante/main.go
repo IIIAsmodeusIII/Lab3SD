@@ -148,6 +148,8 @@ func SendCommand(command string, version []int32) int{
 
 		failOnError(err, "No se pudede acceder al servicio")
 
+		fmt.Printf("[SendCommand Address] ServerAddress:%v.\n", r.Address)
+
 		// Send command
 		conn, err = grpc.Dial(r.Address, grpc.WithInsecure(), grpc.WithBlock())
 		failOnError(err, "Problema al conectar al servidor.")
@@ -161,8 +163,10 @@ func SendCommand(command string, version []int32) int{
 		})
 
 		if r2.Code == int32(-1) {
+			fmt.Printf("[SendCommand Sync] Sincronizando con Writes previos...\n")
 			continue
 		}else{
+			fmt.Printf("[SendCommand Response] Server[%v] - V%v.\n", r2.Server, r2.Version)
 			return 0
 		}
 	}
