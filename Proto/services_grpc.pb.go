@@ -142,6 +142,9 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 type FulcrumClient interface {
 	CRUD(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Data, error)
 	GetRebelds(ctx context.Context, in *GetRebeldsReq, opts ...grpc.CallOption) (*GetRebeldsResp, error)
+	Merge(ctx context.Context, in *MergeReq, opts ...grpc.CallOption) (Fulcrum_MergeClient, error)
+	SwitchBlock(ctx context.Context, in *BlockReq, opts ...grpc.CallOption) (*BlockResp, error)
+	File(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_FileClient, error)
 }
 
 type fulcrumClient struct {
@@ -170,12 +173,90 @@ func (c *fulcrumClient) GetRebelds(ctx context.Context, in *GetRebeldsReq, opts 
 	return out, nil
 }
 
+func (c *fulcrumClient) Merge(ctx context.Context, in *MergeReq, opts ...grpc.CallOption) (Fulcrum_MergeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Fulcrum_ServiceDesc.Streams[0], "/grpc.Fulcrum/Merge", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fulcrumMergeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Fulcrum_MergeClient interface {
+	Recv() (*MergeResp, error)
+	grpc.ClientStream
+}
+
+type fulcrumMergeClient struct {
+	grpc.ClientStream
+}
+
+func (x *fulcrumMergeClient) Recv() (*MergeResp, error) {
+	m := new(MergeResp)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *fulcrumClient) SwitchBlock(ctx context.Context, in *BlockReq, opts ...grpc.CallOption) (*BlockResp, error) {
+	out := new(BlockResp)
+	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/SwitchBlock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fulcrumClient) File(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_FileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Fulcrum_ServiceDesc.Streams[1], "/grpc.Fulcrum/File", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fulcrumFileClient{stream}
+	return x, nil
+}
+
+type Fulcrum_FileClient interface {
+	Send(*FileSend) error
+	CloseAndRecv() (*FileResp, error)
+	grpc.ClientStream
+}
+
+type fulcrumFileClient struct {
+	grpc.ClientStream
+}
+
+func (x *fulcrumFileClient) Send(m *FileSend) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fulcrumFileClient) CloseAndRecv() (*FileResp, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(FileResp)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
 type FulcrumServer interface {
 	CRUD(context.Context, *Command) (*Data, error)
 	GetRebelds(context.Context, *GetRebeldsReq) (*GetRebeldsResp, error)
+	Merge(*MergeReq, Fulcrum_MergeServer) error
+	SwitchBlock(context.Context, *BlockReq) (*BlockResp, error)
+	File(Fulcrum_FileServer) error
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -188,6 +269,15 @@ func (UnimplementedFulcrumServer) CRUD(context.Context, *Command) (*Data, error)
 }
 func (UnimplementedFulcrumServer) GetRebelds(context.Context, *GetRebeldsReq) (*GetRebeldsResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRebelds not implemented")
+}
+func (UnimplementedFulcrumServer) Merge(*MergeReq, Fulcrum_MergeServer) error {
+	return status.Errorf(codes.Unimplemented, "method Merge not implemented")
+}
+func (UnimplementedFulcrumServer) SwitchBlock(context.Context, *BlockReq) (*BlockResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SwitchBlock not implemented")
+}
+func (UnimplementedFulcrumServer) File(Fulcrum_FileServer) error {
+	return status.Errorf(codes.Unimplemented, "method File not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -238,6 +328,71 @@ func _Fulcrum_GetRebelds_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fulcrum_Merge_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(MergeReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(FulcrumServer).Merge(m, &fulcrumMergeServer{stream})
+}
+
+type Fulcrum_MergeServer interface {
+	Send(*MergeResp) error
+	grpc.ServerStream
+}
+
+type fulcrumMergeServer struct {
+	grpc.ServerStream
+}
+
+func (x *fulcrumMergeServer) Send(m *MergeResp) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Fulcrum_SwitchBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).SwitchBlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.Fulcrum/SwitchBlock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).SwitchBlock(ctx, req.(*BlockReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fulcrum_File_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FulcrumServer).File(&fulcrumFileServer{stream})
+}
+
+type Fulcrum_FileServer interface {
+	SendAndClose(*FileResp) error
+	Recv() (*FileSend, error)
+	grpc.ServerStream
+}
+
+type fulcrumFileServer struct {
+	grpc.ServerStream
+}
+
+func (x *fulcrumFileServer) SendAndClose(m *FileResp) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fulcrumFileServer) Recv() (*FileSend, error) {
+	m := new(FileSend)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -253,7 +408,22 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetRebelds",
 			Handler:    _Fulcrum_GetRebelds_Handler,
 		},
+		{
+			MethodName: "SwitchBlock",
+			Handler:    _Fulcrum_SwitchBlock_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Merge",
+			Handler:       _Fulcrum_Merge_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "File",
+			Handler:       _Fulcrum_File_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "Proto/services.proto",
 }

@@ -9,18 +9,15 @@ import (
     "math/rand"
     "bufio"
     "io/ioutil"
+    "io"
     "strings"
     "time"
+    "path/filepath"
 
 	"context"
 
 	"google.golang.org/grpc"
 	pb "github.com/IIIAsmodeusIII/Tarea3/Proto"
-)
-
-const (
-	port = ":50050"
-    debug  = true
 )
 
 type server struct {
@@ -33,8 +30,9 @@ type PlanetaryData struct {
 }
 
 var server_files []PlanetaryData
+var servers_ips [3]string
 var server_index int32
-
+var server_block bool
 
 // ================================ Aux Func ================================ //
 func failOnError(err error, msg string) {
@@ -54,10 +52,68 @@ func FindFile(file string) int {
     return -1
 }
 
-func DEBUG(data string){
-    if debug {
-        fmt.Printf("[DEBUG] %v\n", data)
+func UpdateClock(file string) PlanetaryData{
+    index := FindFile(file)
+    if index == -1 {
+        return PlanetaryData{}
     }
+
+    server_files[index].version[int(server_index)] += int32(1)
+    return server_files[index]
+}
+
+func Executer(commands []string) []string{
+
+    var failed []string
+
+    for _, command := range commands {
+
+        // Get command data
+        data := strings.Split(command, " ")
+        comm := data[0]
+        file := data[1] + ".txt"
+        city := data[2]
+
+        var status int
+
+        if (comm == "AddCity"){
+
+            // Check register existence
+            index := FindFile(file)
+            if index == -1 {
+                new_ver     := make([]int32, 3)
+                new_ver[0]   = int32(0)
+                new_ver[1]   = int32(0)
+                new_ver[2]   = int32(0)
+
+                new_file    := PlanetaryData{
+                    name: file,
+                    version: new_ver,
+                }
+
+                server_files = append(server_files, new_file)
+            }
+
+
+            if len(data) == 4 {
+                status = AddCity(command, file, city, data[3])
+            }else{
+                status = AddCity(command, file, city, "0")
+            }
+        }else if(comm == "UpdateName"){
+            status = UpdateName(command, file, city, data[3])
+        }else if(comm == "UpdateNumber"){
+            status = UpdateNumber(command, file, city, data[3])
+        }else{
+            status = DeleteCity(command, file, city)
+        }
+
+        if status == -1 {
+            failed = append(failed, command)
+        }
+    }
+
+    return failed
 }
 
 
@@ -124,6 +180,27 @@ func UpdateLine(file string, line int, new_data string){
     failOnError(err, "No se pudo escribir sobre el archivo: " + file)
 }
 
+func DeleteLine(file string, line int){
+    // Open file
+    input, err := ioutil.ReadFile(file)
+    failOnError(err, "No se pudo abrir el archivo: " + file)
+
+    // Create new content in specific line
+    lines := strings.Split(string(input), "\n")
+
+    var new_lines []string
+    for i, cur_line := range lines {
+        if i != line{
+            new_lines = append(new_lines, cur_line)
+        }
+    }
+
+    // Write again updated content
+    output := strings.Join(new_lines, "\n")
+    err = ioutil.WriteFile(file, []byte(output), 0644)
+    failOnError(err, "No se pudo escribir sobre el archivo: " + file)
+}
+
 func WriteLine(file, data string){
     /*
     Function: Append a new line in file with data
@@ -160,11 +237,301 @@ func ReadLine(file string, line int) string{
     return lines[line]
 }
 
+func GetContent(file string) string {
+    input, err := ioutil.ReadFile(file)
+    failOnError(err, "No se pudo abrir el archivo: " + file)
+
+    return string(input)
+}
+
+func AppendLog(file, data string){
+    WriteLine("log_" + file, data)
+}
+
+func DeleteLogs(){
+
+    files, err := filepath.Glob("./log_*.txt")
+    failOnError(err, "Error al buscar logs.")
+
+    for _, f := range files {
+        err = os.Remove(f)
+        failOnError(err, "Error al eliminar logs.")
+    }
+}
+
+
+func AddCity(command, planet, city, ammount string) int{
+
+    // Check register existence
+    index := FindFile(planet)
+
+    // If not, create
+    if index == -1 {
+        var new_ver []int32
+        new_ver[0]   = int32(0)
+        new_ver[1]   = int32(0)
+        new_ver[2]   = int32(0)
+
+        new_file    := PlanetaryData{
+            name: planet,
+            version: new_ver,
+        }
+
+        server_files = append(server_files, new_file)
+
+    // If exist, check if city exist
+    }else{
+        index := LineExist(planet, city)
+
+        // If exist, return -1
+        if index != -1{
+            return -1
+        }
+    }
+
+    // If city doesnt exist, create
+    WriteLine(planet, fmt.Sprintf("%v %v %v", planet, city, ammount))
+    return 0
+}
+
+func UpdateName(command, planet, city, data string) int{
+    index := LineExist(planet, city)
+    if index == -1 {
+        return -1
+    }
+
+    ammount := strings.Split(ReadLine(planet, index), " ")[2]
+
+    UpdateLine(planet, index, fmt.Sprintf("%v %v %v", planet, data, ammount))
+    return 0
+}
+
+func UpdateNumber(command, planet, city, data string) int {
+    index := LineExist(planet, city)
+    if index == -1 {
+        return -1
+    }
+
+    UpdateLine(planet, index, fmt.Sprintf("%v %v %v", planet, city, data))
+    return 0
+}
+
+func DeleteCity(command, planet, city string) int {
+    index :=  LineExist(planet, city)
+    if index == -1 {
+        return -1
+    }
+
+    DeleteLine(planet, index)
+    return 0
+}
+
+
+func MergeMaster(){
+
+    // Block servers while merge
+    server_block = true
+    SwitchBlockMaster(servers_ips[1])
+    SwitchBlockMaster(servers_ips[2])
+
+    // Ask logs
+    var QAddCity []string
+    var QUpdateNumber []string
+    var QUpdateName []string
+    var QDestroyCity []string
+
+    // Connect to first server
+    conn, err := grpc.Dial(servers_ips[1], grpc.WithInsecure(), grpc.WithBlock())
+    failOnError(err, "Problema al conectar al servidor.")
+
+    defer conn.Close()
+    c := pb.NewFulcrumClient(conn)
+
+    stream, err := c.Merge(context.Background(), &pb.MergeReq{
+        Code: int32(200),
+    })
+    failOnError(err, "Error al leer stream de datos durante merge.")
+
+    // For each log
+    for {
+        server_log, err := stream.Recv()
+        if err == io.EOF {
+            break
+        }
+        failOnError(err, "Error durante lectura de stream.")
+
+        // Get commands
+        data    := strings.Split(server_log.Command, " ")
+        command := data[0]
+        file    := data[1] + ".txt"
+
+        if command == "AddCity"{
+            QAddCity = append(QAddCity, command)
+        }else if command == "UpdateNumber"{
+            QUpdateNumber = append(QUpdateNumber, command)
+        }else if command == "UpdateName"{
+            QUpdateName = append(QUpdateName, command)
+        }else{
+            QDestroyCity = append(QDestroyCity, command)
+        }
+
+        // Update clock
+        index := FindFile(file)
+        if(index == -1){
+
+            new_file    := PlanetaryData{
+                name: file,
+                version: server_log.Version,
+            }
+
+            server_files = append(server_files, new_file)
+        }else{
+            server_files[index].version[server_log.Server] = server_log.Version[server_log.Server]
+        }
+    }
+
+    // Connect to second server
+    conn, err = grpc.Dial(servers_ips[2], grpc.WithInsecure(), grpc.WithBlock())
+    failOnError(err, "Problema al conectar al servidor.")
+
+    defer conn.Close()
+    c = pb.NewFulcrumClient(conn)
+
+    stream, err = c.Merge(context.Background(), &pb.MergeReq{
+        Code: int32(200),
+    })
+    failOnError(err, "Error al leer stream de datos durante merge.")
+
+    // For each log
+    for {
+        server_log, err := stream.Recv()
+        if err == io.EOF {
+            break
+        }
+        failOnError(err, "Error durante lectura de stream.")
+
+        // Get commands
+        data    := strings.Split(server_log.Command, " ")
+        command := data[0]
+        file    := data[1] + ".txt"
+
+        if command == "AddCity"{
+            QAddCity = append(QAddCity, command)
+        }else if command == "UpdateNumber"{
+            QUpdateNumber = append(QUpdateNumber, command)
+        }else if command == "UpdateName"{
+            QUpdateName = append(QUpdateName, command)
+        }else{
+            QDestroyCity = append(QDestroyCity, command)
+        }
+
+        // Update clock
+        data  = strings.Split(command, " ")
+        file  = data[1] + ".txt"
+        index := FindFile(file)
+        if index == -1 {
+
+            new_file    := PlanetaryData{
+                name: file,
+                version: server_log.Version,
+            }
+
+            server_files = append(server_files, new_file)
+        }else{
+            server_files[index].version[server_log.Server] = server_log.Version[server_log.Server]
+        }
+    }
+
+    // Execute
+    Executer(QAddCity)
+    QUpdateNumber2 := Executer(QUpdateNumber)
+    Executer(QUpdateName)
+    Executer(QDestroyCity)
+    Executer(QUpdateNumber2)
+
+    // Delete logs
+    DeleteLogs()
+
+    // Propagate files
+    files, err := filepath.Glob("./*.txt")
+    failOnError(err, "Error al buscar archivos.")
+
+    Propagate(files, 1)
+    Propagate(files, 2)
+
+    // Release servers
+    SwitchBlockMaster(servers_ips[1])
+    SwitchBlockMaster(servers_ips[2])
+    server_block = false
+}
+
+func SwitchBlockMaster(address string){
+
+    // Connect to Fulcrum
+    conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+    failOnError(err, "Problema al conectar al servidor.")
+
+    defer conn.Close()
+    c := pb.NewFulcrumClient(conn)
+
+    ctx := context.Background()
+    _, err = c.SwitchBlock(ctx, &pb.BlockReq{
+        Code: int32(200),
+    })
+
+    failOnError(err, "No se pudede acceder al servicio")
+}
+
+func Blocked(){
+    /*
+    Function: Wait until server finish merge
+    */
+
+    // if server is blocked
+    if server_block{
+        fmt.Println("[Informantes] Esperando proceso de merge...")
+        // Wait
+        for {
+            if !server_block{
+                break
+            }
+        }
+        fmt.Println("[Informantes] Proceso merge finalizado.")
+    }
+}
+
+func Propagate(files []string, server int){
+    // Connect to second server
+    conn, err := grpc.Dial(servers_ips[1], grpc.WithInsecure(), grpc.WithBlock())
+    failOnError(err, "Problema al conectar al servidor.")
+
+    defer conn.Close()
+    c := pb.NewFulcrumClient(conn)
+
+    stream, err := c.File(context.Background())
+    failOnError(err, "Error enviando archivos")
+
+    for _, file := range files {
+        var new_file *pb.FileSend
+        new_file.Name = file
+        new_file.File = GetContent(file)
+
+        err = stream.Send(new_file)
+        failOnError(err, "Error durante stream.")
+    }
+
+    reply, err := stream.CloseAndRecv()
+    failOnError(err, "Error al cerrar stream.")
+}
+
 
 
 // ================================= Server ================================= //
-/*
+
 func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
+
+    fmt.Printf("[Informantes Request] Command: %v.\n", req.Command)
+    Blocked()
 
     // Get command data
     data := strings.Split(req.Command, " ")
@@ -172,14 +539,33 @@ func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
     file := data[1] + ".txt"
     city := data[2]
 
+    if (comm == "AddCity"){
+        if len(data) == 4 {
+            AddCity(req.Command, file, city, data[3])
+        }else{
+            AddCity(req.Command, file, city, "0")
+        }
+    }else if(comm == "UpdateName"){
+        UpdateName(req.Command, file, city, data[3])
+    }else if(comm == "UpdateNumber"){
+        UpdateNumber(req.Command, file, city, data[3])
+    }else{
+        DeleteCity(req.Command, file, city)
+    }
+
+    register := UpdateClock(file)
+    AppendLog(file, req.Command)
+
 	return &pb.Data{
-		Code: int64(200),
+		Server: server_index,
+        Version: register.version,
 	}, nil
 }
-*/
+
 func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.GetRebeldsResp, error) {
 
     fmt.Printf("[GetRebelds Request] Planet: %v. City: %v.\n", req.Planet, req.City)
+    Blocked()
 
     // Get command data
     file := req.Planet + ".txt"
@@ -224,7 +610,85 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
 	}, nil
 }
 
-func StartServer(){
+func (s *server) Merge(req *pb.MergeReq, stream pb.MergeResp) error {
+
+    /*
+    Send logs
+    Delete .txt
+    Close stream
+    */
+
+    // Send logs
+    logs, err := filepath.Glob("./log_*.txt")
+    failOnError(err, "Error al buscar archivos.")
+
+    for _, log := range logs {
+
+        // Open log
+        input, err := ioutil.ReadFile(log)
+        failOnError(err, "No se pudo abrir el archivo: " + log)
+
+        // Create new content in specific line
+        lines := strings.Split(string(input), "\n")
+
+        for _, line := range lines {
+
+            file := strings.Split(line, " ")[1]
+            version := server_files[FindFile(file)].version
+
+            var new_log *pb.FileSend
+            new_log.Server = server_index
+            new_log.Version = version
+            new_log.Command = line
+
+
+            err = stream.Send(new_log)
+            failOnError(err, "Error al enviar log line")
+        }
+    }
+
+    // Reset data
+    files, err := filepath.Glob("./*.txt")
+    failOnError(err, "Error al buscar archivos.")
+
+    for _, f := range files {
+        err = os.Remove(f)
+        failOnError(err, "Error al eliminar logs.")
+    }
+
+    return nil
+}
+
+func (s *server) SwitchBlock(ctx context.Context, req *pb.BlockReq) (*pb.BlockResp, error) {
+
+    if server_block{
+        server_block = false
+    }else{
+        server_block = true
+    }
+
+	return &pb.BlockResp{
+		Code: int32(200),
+	}, nil
+}
+
+func (s *server) File(stream pb.FileSend) error {
+
+    for {
+        file, err := stream.Recv()
+        if err == io.EOF {
+          return stream.SendAndClose(&pb.FileResp{
+            Code: int32(200),
+          })
+        }
+        failOnError(err, "Error recibiendo archivo.")
+
+        err = ioutil.WriteFile(file.Name, []byte(file.File), 0644)
+        failOnError(err, "Error escribiendo archivo.")
+    }
+}
+
+func StartServer(port string){
     /*
     Function: Start a server with Fulcrum GRPC service.
     */
@@ -245,8 +709,43 @@ func StartServer(){
 
 // ========================================================================== //
 func main(){
+
+    // Get params
+    port              := flag.String("p", ":50050", "Port to listen")
+    fulcrum_1_address := flag.String("sm", "localhost:50050", "Address of first server")
+    fulcrum_2_address := flag.String("s1", "localhost:50051", "Address of second server")
+    fulcrum_3_address := flag.String("s2", "localhost:50052", "Address of third server")
+    index             := flag.Int("i", 0, "Server index")
+    merge_time        := flag.Int("mt", 120, "Time between merge")
+
+    flag.Parse()
+
+    // Set ip address
+    servers_ips[0] = *fulcrum_1_address
+    servers_ips[1] = *fulcrum_2_address
+    servers_ips[2] = *fulcrum_3_address
+
+    // Set server index
+    server_index = *index
+
+    // Set seed
     rand.Seed(time.Now().UnixNano())
 
-    server_index = int32(0)
-	StartServer()
+    // Set server vars
+    server_block = false
+
+    // Start server dah
+	StartServer(*port)
+
+    // Merge every 'merge_time' seconds
+    /*
+    if server_index == 0 {
+        go StartServer
+        for range time.Tick(time.Second * *merge_time) {
+            Merge()
+        }
+    }else{
+        StartServer()
+    }
+    */
 }

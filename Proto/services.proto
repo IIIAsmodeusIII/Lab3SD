@@ -10,8 +10,11 @@ service Broker{
 }
 
 service Fulcrum{
-    rpc CRUD       (Command) returns (Data) {}
-    rpc GetRebelds (GetRebeldsReq) returns (GetRebeldsResp) {}
+    rpc CRUD        (Command)         returns (Data)             {}
+    rpc GetRebelds  (GetRebeldsReq)   returns (GetRebeldsResp)   {}
+    rpc Merge       (MergeReq)        returns (stream MergeResp) {}
+    rpc SwitchBlock (BlockReq)        returns (BlockResp)        {}
+    rpc File        (stream FileSend) returns (FileResp)         {}
 }
 
 // ========================================================================== //
@@ -49,7 +52,37 @@ message Command{
 }
 
 message Data{
-    int32 data     = 1;
-    string message = 2;
+    int32 code = 1;
+    int32 server = 2;
     repeated int32 version = 3;
+}
+
+
+
+// ========================================================================== //
+message MergeReq {
+    int32 code = 1;
+}
+
+message MergeResp {
+    int32 server = 1;
+    repeated int32 version = 2;
+    string command = 3;
+}
+
+message BlockReq{
+    int32 code = 1;
+}
+
+message BlockResp{
+    int32 code = 1;
+}
+
+message FileSend {
+    string name = 1;
+    string file = 2;
+}
+
+message FileResp {
+    int32 code = 1;
 }

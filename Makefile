@@ -1,52 +1,104 @@
-buildGRPC:
+SERVER_1_ADDRESS=localhost:50050
+SERVER_2_ADDRESS=localhost:50051
+SERVER_3_ADDRESS=localhost:50052
+
+BROKER_PORT=:50049
+BROKER_ADDRESS=localhost:${BROKER_PORT}
+
+BIN_NAME=program
+
+
+
+## ========================================================================== ##
+GRPC:
 	protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     Proto/services.proto
 
 
+
+## ========================================================================== ##
 buildB:
-	go build -o Broker/bin/main main.go
+	go build -o Broker/${BIN_NAME} main.go
 
 runB:
-	go run Broker/main.go
+	./Broker/${BIN_NAME} -s1=${SERVER_1_ADDRESS} -s2=${SERVER_2_ADDRESS} -s3=${SERVER_3_ADDRESS} -p=${BROKER_PORT}
 
 startB:
 	make buildB
 	make runB
 
+devB:
+	go run Broker/main.go -s1=${SERVER_1_ADDRESS} -s2=${SERVER_2_ADDRESS} -s3=${SERVER_3_ADDRESS} -p=${BROKER_PORT}
 
+# Requires:
+# s1: Server address
+# s2: Server address
+# s3: Server address
+# p : Process port
+
+
+
+## ========================================================================== ##
 buildF:
-	go build -o Fulcrum/bin/main main.go
+	go build -o Fulcrum/${BIN_NAME} main.go
 
 runF:
-	go run Fulcrum/main.go
+	./Fulcrum/${BIN_NAME}
 
 startF:
 	make buildF
 	make runF
 
+devF:
+	go run Fulcrum/main.go -sm=${SERVER_1_ADDRESS} -s1=${SERVER_2_ADDRESS} -s2=${SERVER_3_ADDRESS}
 
+# Requires:
+# p: Port to listen. 50050 default.
+# sm: Server master address
+# s1: Slave server 1 address
+# s2: Slave server 2 address
+# i: Server index (0, 1, 2)
+# mt: Merge time. 120 default.
+
+
+
+## ========================================================================== ##
 buildI:
-	go build -o Informante/bin/main main.go
+	go build -o Informante/${BIN_NAME} main.go
 
 runI:
-	go run Informante/main.go
+	./Informante/${BIN_NAME} -ba=${BROKER_ADDRESS}
 
 startI:
 	make buildI
 	make runI
 
+devI:
+	go run Informante/main.go -ba=${BROKER_ADDRESS}
 
+# Requires:
+# ba: Broker address
+
+
+
+## ========================================================================== ##
 buildL:
-	go build -o Leia/bin/main main.go
+	go build -o Leia/${BIN_NAME} main.go
 
 runL:
-	go run Leia/main.go
+	./Leia/${BIN_NAME} -ba=${BROKER_ADDRESS}
 
 startL:
 	make buildL
 	make runL
 
-start:
-	xterm -e startB
-	xterm -e startL
+devL:
+	go run Leia/main.go -ba=${BROKER_ADDRESS}
+
+# Requires:
+# ba: Broker address
+
+
+
+## ========================================================================== ##

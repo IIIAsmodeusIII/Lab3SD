@@ -6,16 +6,12 @@ import (
     "strings"
     "bufio"
     "os"
+    "flag"
 
 	"context"
 
 	"google.golang.org/grpc"
 	pb "github.com/IIIAsmodeusIII/Tarea3/Proto"
-)
-
-const (
-	broker_address = "localhost:50049"
-    debug          = true
 )
 
 type server struct {
@@ -25,10 +21,12 @@ type server struct {
 type PlanetaryData struct {
     name string
     server int32
+    ammount int32
     version []int32
 }
 
 var server_files []PlanetaryData
+var broker_address string
 
 // ================================ Aux Func ================================ //
 func failOnError(err error, msg string) {
@@ -48,10 +46,11 @@ func FindFile(file string) int {
     return -1
 }
 
-func DEBUG(data string){
-    if debug {
-        fmt.Printf("[DEBUG] %v\n", data)
-    }
+func ShowFiles(){
+
+	for _, file := range server_files {
+		fmt.Printf("[Data] %v.\n", file)
+	}
 }
 
 func Menu(){
@@ -71,6 +70,8 @@ func Menu(){
         }else if(data[0] == "GetRebeldsNumber"){
             answer := AskRebelds(input)
             fmt.Printf("[->] Rebelds: %v.\n\n", answer)
+        }else if(data[0] == "Files()"){
+            ShowFiles()
         }else{
             fmt.Printf("[->] Comando '%v' desconocido.\n", input)
         }
@@ -100,6 +101,7 @@ func AskRebelds(command string) int32{
 
         new_file    := PlanetaryData{
             name: planet,
+            ammount: 0,
             server: int32(-1),
             version: new_ver,
         }
@@ -132,6 +134,7 @@ func AskRebelds(command string) int32{
     server_files[index].version[1] = r.Version[1]
     server_files[index].version[2] = r.Version[2]
     server_files[index].server     = r.Server
+    server_files[index].ammount    = r.Ammount
 
     // Return rebelds
     return r.Ammount
@@ -141,5 +144,13 @@ func AskRebelds(command string) int32{
 
 // ========================================================================== //
 func main(){
+
+    // Get params
+	address := flag.String("ba", "localhost:50049", "Address of Broker")
+	flag.Parse()
+
+	// Set broker address
+	broker_address = *address
+
     Menu()
 }
