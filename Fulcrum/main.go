@@ -70,6 +70,7 @@ func Executer(commands []string) []string{
 
         if (command != "") {
             // Get command data
+            fmt.Printf("[DEBUG] Comando73: %v .\n", command)
             data := strings.Split(command, " ")
             comm := data[0]
             planet := data[1] + ".txt"
@@ -357,8 +358,10 @@ func MergeMaster(){
             QUpdateNumber = append(QUpdateNumber, command)
         }else if command == "UpdateName"{
             QUpdateName = append(QUpdateName, command)
-        }else{
+        }else if(command == "DestroyCity"){
             QDestroyCity = append(QDestroyCity, command)
+        }else{
+            continue
         }
 
         // Update clock

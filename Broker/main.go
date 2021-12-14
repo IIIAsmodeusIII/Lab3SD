@@ -75,6 +75,7 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
 
         if r.Server == int32(-1) {
             i++
+            continue
         }
 
         // If clock its older or server doesnt have answer, try another server
@@ -86,7 +87,7 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
             break
         }
 
-        if i == 6 {
+        if i == 7 {
             ammount = 0
             version = append(version, int32(0))
             version = append(version, int32(0))
