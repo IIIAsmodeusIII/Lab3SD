@@ -43,16 +43,16 @@ Por esto, se propone lo siguiente:
 
 No existe orden particular para abrir los archivos. Se espera que todos esten abiertos antes de ser usados. Tambien se recomienda ejecutar el FulcrumMaster (Maquina Dist07) en ultima instancia de forma que merge() no sea un problema.
 
--Dist05 - Consola1-Informante: make devI
--Dist05 - Consola2-Fulcrum: make devF i=1
+- Dist05 Consola1-Informante: make devI
+- Dist05 Consola2-Fulcrum: make devF i=1
 
--Dist06 - Consola1-Informante: make devI
--Dist06 - Consola2-Fulcrum: make devI i=2
+- Dist06 Consola1-Informante: make devI
+- Dist06 Consola2-Fulcrum: make devI i=2
 
--Dist07 - Consola1-Leia: make devL i=0
--Dist07 - Consola2-FulcrumMaster: make devF
+- Dist07 Consola1-Leia: make devL i=0
+- Dist07 Consola2-FulcrumMaster: make devF
 
--Dist08 - Consola1-Broker: make devB
+- Dist08 Consola1-Broker: make devB
 
 Leia:
     GetRebeldsNumber
