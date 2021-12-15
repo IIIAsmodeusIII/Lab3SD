@@ -22,16 +22,24 @@ var servers_ips [3]string
 
 // ================================ Aux Func ================================ //
 func failOnError(err error, msg string) {
-  if err != nil {
-    log.Fatalf("%s: %s", msg, err)
-  }
+    /*
+    Function: If err != nil, print error and close.
+    Input:
+        err: error type
+        msg: msg to show if err != nil
+    */
+    if err != nil {
+        log.Fatalf("%s: %s", msg, err)
+    }
 }
 
 
 
 // ================================= Server ================================= //
 func (s *server) GetServer(ctx context.Context, req *pb.GetServerReq) (*pb.GetServerResp, error) {
-
+    /*
+    Function: Return a random server address
+    */
     fmt.Printf("[GetServer Request] %v - %v.\n", req.Command, req.Version)
     server_index   := rand.Intn(3)
 
@@ -42,7 +50,9 @@ func (s *server) GetServer(ctx context.Context, req *pb.GetServerReq) (*pb.GetSe
 }
 
 func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.GetRebeldsResp, error) {
-
+    /*
+    Function: Finds a server to return rebelds. Check clock version to ensure monolitic reads.
+    */
     // Set random server
     var server_address string
     var server_index int

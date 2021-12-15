@@ -46,7 +46,7 @@ buildF:
 	go build -o Fulcrum/${BIN_NAME} main.go
 
 runF:
-	./Fulcrum/${BIN_NAME}
+	./Fulcrum/${BIN_NAME} -sm=${SERVER_1_ADDRESS} -s1=${SERVER_2_ADDRESS} -s2=${SERVER_3_ADDRESS} -i=$(i)
 
 startF:
 	make buildF

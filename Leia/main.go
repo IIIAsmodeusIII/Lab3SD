@@ -30,13 +30,23 @@ var broker_address string
 
 // ================================ Aux Func ================================ //
 func failOnError(err error, msg string) {
-  if err != nil {
-    log.Fatalf("%s: %s", msg, err)
-  }
+    /*
+    Function: If err != nil, print error and close.
+    Input:
+        err: error type
+        msg: msg to show if err != nil
+    */
+    if err != nil {
+        log.Fatalf("%s: %s", msg, err)
+    }
 }
 
 func FindFile(file string) int {
-
+    /*
+    Function: Search if some file exist in server_files
+    Input:
+        file: string, file name (e.g. Tatooine.txt)
+    */
     for i, data := range server_files {
        if data.name == file {
            return i
@@ -47,7 +57,9 @@ func FindFile(file string) int {
 }
 
 func ShowFiles(){
-
+    /*
+	Function: Show local memory regiters
+	*/
 	for _, file := range server_files {
 		fmt.Printf("[Data] %v.\n", file)
 	}
@@ -83,7 +95,12 @@ func Menu(){
 
 // =========================== Registro planetario ========================== //
 func AskRebelds(command string) int32{
-
+    /*
+    Function: Ask to Broker about rebelds in some planet-city
+    Input:
+        command: string, full input to send to broker
+    */
+    
     // Split data
     data   := strings.Split(command, " ")
     planet := data[1]

@@ -29,20 +29,30 @@ type PlanetaryData struct {
     version []int32
 }
 
-var server_files []PlanetaryData
-var servers_ips [3]string
-var server_index int32
-var server_block bool
+var server_files []PlanetaryData    // To store files and versions in memory
+var servers_ips [3]string           // To store server address
+var server_index int32              // To store self index. 0=master, 1,2=slave
+var server_block bool               // If true, request have to wait until merge ends.
 
 // ================================ Aux Func ================================ //
 func failOnError(err error, msg string) {
-  if err != nil {
-    log.Fatalf("%s: %s", msg, err)
-  }
+    /*
+    Function: If err != nil, print error and close.
+    Input:
+        err: error type
+        msg: msg to show if err != nil
+    */
+    if err != nil {
+        log.Fatalf("%s: %s", msg, err)
+    }
 }
 
 func FindFile(file string) int {
-
+    /*
+    Function: Search if some file exist in server_files
+    Input:
+        file: string, file name (e.g. Tatooine.txt)
+    */
     for i, data := range server_files {
        if data.name == file {
            return i
@@ -53,6 +63,13 @@ func FindFile(file string) int {
 }
 
 func UpdateClock(file string) PlanetaryData{
+    /*
+    Function: Increment vectorial clock. Change made it by self server.
+    Input:
+        file: string, file name of register updated. (e.g. Tatooine.txt)
+    Output:
+        Return register with updated clock
+    */
     index := FindFile(file)
     if index == -1 {
         return PlanetaryData{}
@@ -63,12 +80,19 @@ func UpdateClock(file string) PlanetaryData{
 }
 
 func Executer(commands []string) []string{
-
+    /*
+    Function: Execute few commands
+    Input:
+        commands: strings slice, contains all commands in order to be executed. (e.g. [AddCity X Y 5, UpdateName X Y Z, ...])
+    Output:
+        Returns commands that could not be executed.
+    */
     var failed []string
 
     for _, command := range commands {
 
         if (command != "") {
+
             // Get command data
             fmt.Printf("[DEBUG] ExecuterComando: %v .\n", command)
             data := strings.Split(command, " ")
@@ -78,6 +102,7 @@ func Executer(commands []string) []string{
 
             var status int
 
+            // Switch by command
             if (comm == "AddCity"){
                 if len(data) == 4 {
                     status = AddCity(command, planet, city, data[3])
@@ -94,6 +119,7 @@ func Executer(commands []string) []string{
                 continue
             }
 
+            // If command could not be executed
             if status == -1 {
                 failed = append(failed, command)
             }
@@ -103,7 +129,9 @@ func Executer(commands []string) []string{
 }
 
 func ShowFiles(){
-
+    /*
+    Show local files
+    */
 	for _, file := range server_files {
 		fmt.Printf("[Data] %v.\n", file)
 	}
@@ -124,13 +152,16 @@ func LineExist(file, city_name string) int{
         return -1
     }
 
+    // if file doesnt exist, create it
     f, err := os.OpenFile("./Fulcrum/" + file, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
     f.Close()
 
+    // Read file
     input, err := ioutil.ReadFile("./Fulcrum/" + file)
     failOnError(err, "No se pudo abrir el archivo: " + file)
     lines := strings.Split(string(input), "\n")
 
+    // Find line with specific city
     for i, line := range lines {
         if line != ""{
 
@@ -143,6 +174,7 @@ func LineExist(file, city_name string) int{
         }
     }
 
+    // if city doesnt exist, return -1
     return -1
 }
 
@@ -170,6 +202,12 @@ func UpdateLine(file string, line int, new_data string){
 }
 
 func DeleteLine(file string, line int){
+    /*
+    Function: Delete a line from a file
+    Input:
+        file: string, file name (e.g. Tatooine.txt)
+        line: int, line intex to erase
+    */
     // Open file
     input, err := ioutil.ReadFile("./Fulcrum/" + file)
     failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
@@ -177,6 +215,7 @@ func DeleteLine(file string, line int){
     // Create new content in specific line
     lines := strings.Split(string(input), "\n")
 
+    // save all lines but the one that would be deleted
     var new_lines []string
     for i, cur_line := range lines {
         if i != line{
@@ -215,6 +254,8 @@ func ReadLine(file string, line int) string{
     Input:
         file: file name, string. (e.g. example_file.txt)
         line: line number to read, int. (e.g. 3)
+    Output:
+        The specific line in file
     */
 
     // Read file
@@ -227,6 +268,13 @@ func ReadLine(file string, line int) string{
 }
 
 func GetContent(file string) string {
+    /*
+    Function: Get all content in some file
+    Input:
+        file: string, name file (e.g. Tatooine.txt)
+    Output:
+        All content in some file
+    */
     input, err := ioutil.ReadFile(file)
     failOnError(err, "No se pudo abrir el archivo: " + "./Fulcrum/" + file)
 
@@ -234,10 +282,21 @@ func GetContent(file string) string {
 }
 
 func AppendLog(file, data string){
+    /*
+    Function: Append to some file, some log in the respective log_file.
+    Input:
+        file: string, file name of planetary system
+        data: log to be appended
+    */
+
+    // Use our function
     WriteLine("log_" + file, data + "\n")
 }
 
 func DeleteLogs(){
+    /*
+    Function: Use a wildcard to remove all logs
+    */
 
     files, err := filepath.Glob("./Fulcrum/log_*.txt")
     failOnError(err, "Error al buscar logs.")
@@ -250,6 +309,16 @@ func DeleteLogs(){
 
 
 func AddCity(command, planet, city, ammount string) int{
+    /*
+    Function: Add city to server
+    Input:
+        command: string, full command data
+        planet: wich planet will be created or edited
+        city: new city
+        ammount: ammount of rebelds in it
+    Output:
+        If successm 0. -1 otherwise.
+    */
 
     // Check register existence
     index := FindFile(planet)
@@ -284,6 +353,16 @@ func AddCity(command, planet, city, ammount string) int{
 }
 
 func UpdateName(command, planet, city, data string) int{
+    /*
+    Function: Edit city same in server
+    Input:
+        command: string, full command data
+        planet: wich planet will be created or edited
+        city: new city
+        data: new city name
+    Output:
+        If successm 0. -1 otherwise.
+    */
     index := LineExist(planet, city)
     if index == -1 {
         return -1
@@ -296,6 +375,16 @@ func UpdateName(command, planet, city, data string) int{
 }
 
 func UpdateNumber(command, planet, city, data string) int {
+    /*
+    Function: Edit rebelds in certain city
+    Input:
+        command: string, full command data
+        planet: wich planet will be created or edited
+        city: new city
+        data: new ammount of rebelds in it
+    Output:
+        If successm 0. -1 otherwise.
+    */
     index := LineExist(planet, city)
     if index == -1 {
         return -1
@@ -306,6 +395,15 @@ func UpdateNumber(command, planet, city, data string) int {
 }
 
 func DeleteCity(command, planet, city string) int {
+    /*
+    Function: Delete city from server
+    Input:
+        command: string, full command data
+        planet: wich planet will be created or edited
+        city: new city
+    Output:
+        If successm 0. -1 otherwise.
+    */
     index :=  LineExist(planet, city)
     if index == -1 {
         return -1
@@ -317,6 +415,9 @@ func DeleteCity(command, planet, city string) int {
 
 
 func MergeMaster(){
+    /*
+    Function: Start merge process between replicas. More details in README.md.
+    */
 
     // Block servers while merge
     server_block = true
@@ -469,7 +570,11 @@ func MergeMaster(){
 }
 
 func SwitchBlockMaster(address string){
-
+    /*
+    Function: Block/Unblock some slave server
+    Input:
+        address: string, address of server to block/unblock
+    */
     // Connect to Fulcrum
     conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
     failOnError(err, "Problema al conectar al servidor.")
@@ -504,7 +609,14 @@ func Blocked(){
 }
 
 func Propagate(files []string, server int){
+    /*
+    Function: Propagates local files to some server
+    Input:
+        files: array of strings with all files names. (e.g. [Tatooine.txt Tierra.txt Elvis.txt ...])
+        server: int, wich slave server will be replica
+    */
 
+    // Conections
     conn, err := grpc.Dial(servers_ips[server], grpc.WithInsecure(), grpc.WithBlock())
     failOnError(err, "Problema al conectar al servidor.")
 
@@ -514,6 +626,7 @@ func Propagate(files []string, server int){
     stream, err := c.File(context.Background())
     failOnError(err, "Error enviando archivos")
 
+    // Send file
     for _, file := range files {
 
         new_file := &pb.FileSend{
@@ -534,6 +647,9 @@ func Propagate(files []string, server int){
 // ================================= Server ================================= //
 
 func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
+    /*
+    Function: Manage Informants actions.
+    */
 
     fmt.Printf("[Crud Request] Command: %v.\n", req.Command)
     Blocked()
@@ -579,7 +695,9 @@ func (s *server) CRUD(ctx context.Context, req *pb.Command) (*pb.Data, error) {
 }
 
 func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.GetRebeldsResp, error) {
-
+    /*
+    Function: Manage Broker requests
+    */
     fmt.Printf("[GetRebelds Request] Planet: %v. City: %v.\n", req.Planet, req.City)
     Blocked()
 
@@ -629,7 +747,9 @@ func (s *server) GetRebelds(ctx context.Context, req *pb.GetRebeldsReq) (*pb.Get
 }
 
 func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
-
+    /*
+    Function: Send to client all logs in logs files
+    */
     fmt.Println("[Merge] Iniciando envio de logs.")
     // Send logs
     logs, err := filepath.Glob("./Fulcrum/log_*.txt")
@@ -656,6 +776,7 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
                     Version: version,
                 }
 
+                // Send log line
                 err := stream.Send(new_log)
                 failOnError(err, "Error al enviar log line")
             }
@@ -676,6 +797,9 @@ func (s *server) Merge(req *pb.MergeReq, stream pb.Fulcrum_MergeServer) error {
 }
 
 func (s *server) SwitchBlock(ctx context.Context, req *pb.BlockReq) (*pb.BlockResp, error) {
+    /*
+    Function: Block/Unblock server
+    */
 
     if server_block{
         server_block = false
@@ -691,7 +815,9 @@ func (s *server) SwitchBlock(ctx context.Context, req *pb.BlockReq) (*pb.BlockRe
 }
 
 func (s *server) File(stream pb.Fulcrum_FileServer) error {
-
+    /*
+    Get all files from master-node and replace local files in order to eventual consistency
+    */
     fmt.Println("[Merge] Recibiendo datos de propagacion.")
     for {
         file, err := stream.Recv()
