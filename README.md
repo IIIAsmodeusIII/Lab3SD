@@ -54,14 +54,16 @@ No existe orden particular para abrir los archivos. Se espera que todos esten ab
 
 - Dist08 Consola1-Broker: make devB
 
-Leia:
-GetRebeldsNumber
+###Leia
 
-Informantes:
-AddCity Planet City [Rebelds]
-UpdateName Planet City New_Name
-UpdateNumber Planet City New_Rebelds
-DeleteCity Planet City
+- GetRebeldsNumber
+
+###Informantes
+
+- AddCity Planet City [Rebelds]
+- UpdateName Planet City New_Name
+- UpdateNumber Planet City New_Rebelds
+- DeleteCity Planet City
 
 ### Codigos
 
